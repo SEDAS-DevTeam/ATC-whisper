@@ -1,2 +1,7 @@
-/src/model_src/*
-!/src/model_src/.gitkeep
+# Model installation path
+# /src/model/*
+# !/src/model/.gitkeep
+
+# Dataset generation path
+# /src/train/dataset/*
+# !/src/train/dataset/.gitkeep
