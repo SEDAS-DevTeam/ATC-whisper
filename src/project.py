@@ -4,8 +4,17 @@
 from tabulate import tabulate
 import subprocess
 from pathlib import Path
+import pycdlib
+import requests
+import shutil
+
+# os library import
+from os.path import join
+from os import makedirs, mkdir
 
 abs_path = str(Path(__file__).parent)
+
+dataset_url = "http://www2.spsc.tugraz.at/databases/ATCOSIM/.ISO/atcosim.iso"
 
 # functions
 def print_color(color, text):
@@ -51,10 +60,60 @@ def print_info():
     print(out_string)
 
 def run_model_train():
-    run_script(abs_path + "/train/main.py")
+    run_script(join(abs_path, "train/main.py"))
 
 def run_model_infer():
     print("Running infer!")
+
+def download_dataset():
+    def extract_directory(iso: pycdlib.PyCdlib, path, output_path):
+        for entry in iso.list_children(iso_path=path):
+            name = entry.file_identifier().decode('utf-8')
+            if name == "." or name == "..":
+                continue        
+    
+            child_path = join(path, name)
+            if entry.is_dir():
+                new_output_path = join(output_path, name)
+                makedirs(new_output_path, exist_ok=True)
+                extract_directory(iso, child_path, new_output_path)
+            else:
+                new_output_path = join(output_path, name)
+                iso.get_file_from_iso(local_path=new_output_path, iso_path=child_path)
+
+
+
+    iso_output_path = join(abs_path, "dataset/atcosim.iso")
+    dataset_output_path = join(abs_path, "dataset/src_data")
+
+    # download dataset .iso file
+    """
+    print_color(colors.BLUE, "Starting dataset download...")
+
+    response = requests.get(dataset_url)
+    if response.status_code == 200:
+        with open(iso_output_path, "wb") as dataset_file:
+            dataset_file.write(response.content)
+    
+    print_color(colors.BLUE, "Finished dataset download")
+    """
+
+    # recreate source directory
+    shutil.rmtree(dataset_output_path)
+    mkdir(dataset_output_path)
+
+    # extract dataset .iso file
+    print_color(colors.BLUE, "Starting dataset extraction...")
+    iso_extractor = pycdlib.PyCdlib()
+    iso_extractor.open(iso_output_path)
+
+    extract_directory(iso_extractor, "/", dataset_output_path)
+    iso_extractor.close()
+
+    print_color(colors.BLUE, "Dataset extracted, done")
+
+def download_model():
+    pass
 
 # definitions
 class colors:
@@ -87,6 +146,16 @@ info = [
         "name": "run-infer",
         "desc": "run example infer, params: [mic, local]",
         "call": run_model_infer  
+    },
+    {
+        "name": "download-dataset",
+        "desc": "Download ATCOSIM dataset for whisper training",
+        "call": download_dataset
+    },
+    {
+        "name": "download-model",
+        "desc": "Download Whisper model for its training and infer",
+        "call": download_model
     }
 ]
 

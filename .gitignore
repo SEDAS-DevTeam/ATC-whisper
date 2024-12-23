@@ -3,5 +3,5 @@
 # !/src/model/.gitkeep
 
 # Dataset generation path
-# /src/train/dataset/*
-# !/src/train/dataset/.gitkeep
+/src/dataset/*
+!/src/dataset/.gitkeep
