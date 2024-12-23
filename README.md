@@ -15,3 +15,9 @@ src
     ├─ main.py # main file for whisper training
     └─ model.py # for whisper model initialization
 ```
+
+## TODO
+
+- [ ] Add Whisper download
+- [ ] Add Dataset processing
+- [ ] Finish infer
