@@ -1,10 +1,16 @@
 #!/usr/bin/env python
 
 # imports
-import argparse
 from tabulate import tabulate
+import subprocess
+from pathlib import Path
+
+abs_path = str(Path(__file__).parent)
 
 # functions
+def print_color(color, text):
+    print(color + text + colors.ENDC)
+
 def parse_input(input_string):
     arr = input_string.split(" ")
     command = arr[0]
@@ -12,6 +18,32 @@ def parse_input(input_string):
 
     return command, params
 
+def run_script(command: str):
+    command_split = command.split(" ")
+    process = subprocess.Popen(command_split, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+
+    try:
+        for line in iter(process.stdout.readline, ''):
+            print(line, end='')
+    except KeyboardInterrupt:
+        print("\n")
+        print_color(colors.BLUE, "Exiting...")
+
+        process.terminate()
+        process.wait()
+    finally:
+        if process.stdout:
+            process.stdout.close()
+        if process.stderr:
+            process.stderr.close()
+        process.terminate()
+        process.wait()
+
+        print_color(colors.BLUE, "Process terminated")
+
+        exit(0)
+
+# commands in dict
 def print_info():
     out_string = ""
     for item in info:
@@ -19,7 +51,7 @@ def print_info():
     print(out_string)
 
 def run_model_train():
-    print("Running train!")
+    run_script(abs_path + "/train/main.py")
 
 def run_model_infer():
     print("Running infer!")
