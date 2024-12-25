@@ -10,15 +10,30 @@ import shutil
 
 # os library import
 from os.path import join
-from os import makedirs, mkdir
+from os import makedirs, mkdir, remove
+
+import yaml
 
 abs_path = str(Path(__file__).parent)
+
+# config paths
+dataset_path = join(abs_path, "configs/dataset_config.yaml")
+model_path = join(abs_path, "configs/model_config.yaml")
 
 dataset_url = "http://www2.spsc.tugraz.at/databases/ATCOSIM/.ISO/atcosim.iso"
 
 # functions
 def print_color(color, text):
     print(color + text + colors.ENDC)
+
+def load_config(path):
+    with open(path) as stream:
+        try:
+            return yaml.safe_load(stream)
+        except yaml.YAMLError as exception:
+            print("Error reading yaml file:")
+            print(exception)
+            exit(0)
 
 def parse_input(input_string):
     arr = input_string.split(" ")
@@ -50,8 +65,6 @@ def run_script(command: str):
 
         print_color(colors.BLUE, "Process terminated")
 
-        exit(0)
-
 # commands in dict
 def print_info():
     out_string = ""
@@ -81,13 +94,20 @@ def download_dataset():
                 new_output_path = join(output_path, name)
                 iso.get_file_from_iso(local_path=new_output_path, iso_path=child_path)
 
-
-
     iso_output_path = join(abs_path, "dataset/atcosim.iso")
     dataset_output_path = join(abs_path, "dataset/src_data")
 
+    # remove existing .iso file
+    try:
+        remove(iso_output_path)
+
+        # recreate source directory
+        shutil.rmtree(dataset_output_path)
+        mkdir(dataset_output_path)
+    except FileNotFoundError:
+        pass
+
     # download dataset .iso file
-    """
     print_color(colors.BLUE, "Starting dataset download...")
 
     response = requests.get(dataset_url)
@@ -96,11 +116,6 @@ def download_dataset():
             dataset_file.write(response.content)
     
     print_color(colors.BLUE, "Finished dataset download")
-    """
-
-    # recreate source directory
-    shutil.rmtree(dataset_output_path)
-    mkdir(dataset_output_path)
 
     # extract dataset .iso file
     print_color(colors.BLUE, "Starting dataset extraction...")
@@ -111,9 +126,6 @@ def download_dataset():
     iso_extractor.close()
 
     print_color(colors.BLUE, "Dataset extracted, done")
-
-def download_model():
-    pass
 
 # definitions
 class colors:
@@ -151,13 +163,12 @@ info = [
         "name": "download-dataset",
         "desc": "Download ATCOSIM dataset for whisper training",
         "call": download_dataset
-    },
-    {
-        "name": "download-model",
-        "desc": "Download Whisper model for its training and infer",
-        "call": download_model
     }
 ]
+
+# load all configs
+dataset_config = load_config(dataset_path)
+model_config = load_config(model_path)
 
 # start to in program loop
 print(colors.BLUE)
