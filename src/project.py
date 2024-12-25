@@ -22,9 +22,11 @@ model_path = join(abs_path, "configs/model_config.yaml")
 
 dataset_url = "http://www2.spsc.tugraz.at/databases/ATCOSIM/.ISO/atcosim.iso"
 
+
 # functions
 def print_color(color, text):
     print(color + text + colors.ENDC)
+
 
 def load_config(path):
     with open(path) as stream:
@@ -35,12 +37,14 @@ def load_config(path):
             print(exception)
             exit(0)
 
+
 def parse_input(input_string):
     arr = input_string.split(" ")
     command = arr[0]
     params = arr[1:]
 
     return command, params
+
 
 def run_script(command: str):
     command_split = command.split(" ")
@@ -65,6 +69,7 @@ def run_script(command: str):
 
         print_color(colors.BLUE, "Process terminated")
 
+
 # commands in dict
 def print_info():
     out_string = ""
@@ -72,19 +77,22 @@ def print_info():
         out_string += colors.UNDERLINE + item["name"] + colors.ENDC + " " + chars.ARROW + "\n" + chars.TAB + item["desc"] + "\n"
     print(out_string)
 
+
 def run_model_train():
     run_script(join(abs_path, "train/main.py"))
 
+
 def run_model_infer():
     print("Running infer!")
+
 
 def download_dataset():
     def extract_directory(iso: pycdlib.PyCdlib, path, output_path):
         for entry in iso.list_children(iso_path=path):
             name = entry.file_identifier().decode('utf-8')
             if name == "." or name == "..":
-                continue        
-    
+                continue
+
             child_path = join(path, name)
             if entry.is_dir():
                 new_output_path = join(output_path, name)
@@ -114,7 +122,7 @@ def download_dataset():
     if response.status_code == 200:
         with open(iso_output_path, "wb") as dataset_file:
             dataset_file.write(response.content)
-    
+
     print_color(colors.BLUE, "Finished dataset download")
 
     # extract dataset .iso file
@@ -127,6 +135,7 @@ def download_dataset():
 
     print_color(colors.BLUE, "Dataset extracted, done")
 
+
 # definitions
 class colors:
     ENDC = '\033[0m'
@@ -134,9 +143,11 @@ class colors:
     UNDERLINE = '\033[4m'
     BLUE = '\033[94m'
 
+
 class chars:
     ARROW = '\u2192'
     TAB = '\t'
+
 
 info = [
     {
@@ -157,7 +168,7 @@ info = [
     {
         "name": "run-infer",
         "desc": "run example infer, params: [mic, local]",
-        "call": run_model_infer  
+        "call": run_model_infer
     },
     {
         "name": "download-dataset",
