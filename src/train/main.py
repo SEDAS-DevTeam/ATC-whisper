@@ -2,7 +2,10 @@
 
 # imports
 import whisper
+import sys
 
 if __name__ == "__main__":
-    print("running main.py!")
-    print(whisper.available_models())
+    # parse arguments
+    args = sys.argv[1:]
+
+    model_type = [0]

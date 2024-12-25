@@ -14,7 +14,8 @@ from os import makedirs, mkdir, remove
 
 import yaml
 
-abs_path = str(Path(__file__).parent)
+abs_path = str(Path(__file__).parents[1])
+abs_path_src = join(abs_path, "src/")
 
 # config paths
 dataset_path = join(abs_path, "configs/dataset_config.yaml")
@@ -70,6 +71,14 @@ def run_script(command: str):
         print_color(colors.BLUE, "Process terminated")
 
 
+def add_args(command, *args):
+    res_command = command
+    for arg in args:
+        res_command += " " + arg
+
+    return res_command
+
+
 # commands in dict
 def print_info():
     out_string = ""
@@ -79,7 +88,11 @@ def print_info():
 
 
 def run_model_train():
-    run_script(join(abs_path, "train/main.py"))
+    # reparse config into args
+    model_type = model_config["type"]
+
+    command = add_args(join(abs_path_src, "train/main.py"), model_type)
+    run_script(command)
 
 
 def run_model_infer():

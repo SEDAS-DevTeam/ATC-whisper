@@ -16,3 +16,4 @@ dependencies:
     - pycdlib
     - pyyaml
     - tabulate
+    - openai-whisper
