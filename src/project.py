@@ -22,6 +22,7 @@ dataset_path = join(abs_path, "configs/dataset_config.yaml")
 model_path = join(abs_path, "configs/model_config.yaml")
 
 dataset_url = "http://www2.spsc.tugraz.at/databases/ATCOSIM/.ISO/atcosim.iso"
+model_url = "https://ggml.ggerganov.com/"
 
 
 # functions
@@ -65,6 +66,7 @@ def run_script(command: str):
             process.stdout.close()
         if process.stderr:
             process.stderr.close()
+            # TODO: add stderr
         process.terminate()
         process.wait()
 
@@ -149,6 +151,32 @@ def download_dataset():
     print_color(colors.BLUE, "Dataset extracted, done")
 
 
+def download_model():
+    def parse_url():
+        global model_url
+        return model_url + "ggml-model-whisper-" + model_config["type"] + ".bin"
+
+    # download model .bin file
+    print_color(colors.BLUE, "Starting model download...")
+
+    model_output_path = join(abs_path_src, "model/source/" + model_config["type"] + ".bin")
+    pt_output_path = join(abs_path_src, "model/source/" + model_config["type"] + ".pt")
+
+    """
+    response = requests.get(parse_url())
+    if response.status_code == 200:
+        with open(model_output_path, "wb") as dataset_file:
+            dataset_file.write(response.content)
+
+    # finished model .bin file
+    print_color(colors.BLUE, "Finished model download")
+    """
+
+    # converting .bin to .pt for load
+    command = add_args("python3", join(abs_path_src, "model/ggml_to_pt.py"), model_output_path, pt_output_path)
+    run_script(command)
+
+
 # definitions
 class colors:
     ENDC = '\033[0m'
@@ -187,6 +215,11 @@ info = [
         "name": "download-dataset",
         "desc": "Download ATCOSIM dataset for whisper training",
         "call": download_dataset
+    },
+    {
+        "name": "download-model",
+        "desc": "Download Whisper model from whisper.cpp source",
+        "call": download_model
     }
 ]
 
