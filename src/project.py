@@ -93,8 +93,18 @@ def print_info(*args):
 def run_model_train(*args):
     # reparse config into args
     model_type = model_config["type"]
+    cuda       = model_config["compute"]
+    checkpoint = model_config["checkpoint_path"]
 
-    command = add_args(join(abs_path_src, "train/main.py"), model_type)
+    txt_path   = dataset_config["txt_path"]
+    wav_path   = dataset_config["wav_path"]
+
+    command = add_args(join(abs_path_src, "train/main.py"),
+                       model_type,
+                       cuda,
+                       join(abs_path, checkpoint),
+                       join(abs_path, txt_path),
+                       join(abs_path, wav_path))
     run_script(command)
 
 

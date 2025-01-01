@@ -1,6 +1,7 @@
 # imports
 import whisper
 import torch
+import lightning
 
 
 class WhisperPipeline:

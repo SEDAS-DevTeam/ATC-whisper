@@ -1,25 +1,34 @@
 #!/usr/bin/env python
 
 # imports
-from train import model, data
+import model
+import data
 
 import torch
+import lightning
 import sys
 
 # vars
-CUDA = "cpu" # set cpu by default
+cuda = "cpu" # set cpu by default
 
 if __name__ == "__main__":
     # parse arguments
     args = sys.argv[1:]
     model_type = args[0]
-    CUDA = args[1]
+    cuda = args[1]
+    checkpoint_path = arg[2]
+    txt_path = args[3]
+    wav_path = args[4]
 
     # preprocess dataset and load to memory
+    dataset = data.ATCOSIM_dataset(wav_path,
+                                   txt_path)
+
+    exit(0) #TODO: just for testing
 
     # load whisper model
     whisper_pipeline = model.WhisperPipeline(model_type,
-                                             CUDA)
+                                             cuda,
+                                             checkpoint_path)
     whisper_pipeline.clean_cache() # clean any residue cache
     whisper_pipeline.load_pipeline() # load whisper and its tokenizer
-
