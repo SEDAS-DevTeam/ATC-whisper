@@ -16,6 +16,19 @@ src
     └─ model.py # for whisper model initialization
 ```
 
+## Dataset modifications
+
+### Excluded annotations from ATCOSIM
+(done automatically using script)
+
+- `<FL></FL>`
+    - when empty (full french language)
+    - when inserted into another sequence using <FL> tags
+- `<OT></OT>` - only when e
+
+### Cleaned annotations from text
+- `[HNOISE]` - irrevelant
+
 ## TODO
 
 - [x] Add Whisper download
