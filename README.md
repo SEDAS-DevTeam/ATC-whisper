@@ -18,6 +18,7 @@ src
 
 ## TODO
 
-- [ ] Add Whisper download
+- [x] Add Whisper download
 - [ ] Add Dataset processing
 - [ ] Finish infer
+- [ ] Add model stashing

@@ -10,7 +10,7 @@ import shutil
 
 # os library import
 from os.path import join
-from os import makedirs, mkdir, remove
+from os import makedirs, mkdir, remove, listdir
 
 import yaml
 
@@ -65,8 +65,9 @@ def run_script(command: str):
         if process.stdout:
             process.stdout.close()
         if process.stderr:
+            for line in iter(process.stderr.readline, ''):
+                print(line, end='')
             process.stderr.close()
-            # TODO: add stderr
         process.terminate()
         process.wait()
 
@@ -82,14 +83,14 @@ def add_args(command, *args):
 
 
 # commands in dict
-def print_info():
+def print_info(*args):
     out_string = ""
     for item in info:
         out_string += colors.UNDERLINE + item["name"] + colors.ENDC + " " + chars.ARROW + "\n" + chars.TAB + item["desc"] + "\n"
     print(out_string)
 
 
-def run_model_train():
+def run_model_train(*args):
     # reparse config into args
     model_type = model_config["type"]
 
@@ -97,11 +98,11 @@ def run_model_train():
     run_script(command)
 
 
-def run_model_infer():
+def run_model_infer(*args):
     print("Running infer!")
 
 
-def download_dataset():
+def download_dataset(*args):
     def extract_directory(iso: pycdlib.PyCdlib, path, output_path):
         for entry in iso.list_children(iso_path=path):
             name = entry.file_identifier().decode('utf-8')
@@ -117,8 +118,8 @@ def download_dataset():
                 new_output_path = join(output_path, name)
                 iso.get_file_from_iso(local_path=new_output_path, iso_path=child_path)
 
-    iso_output_path = join(abs_path, "dataset/atcosim.iso")
-    dataset_output_path = join(abs_path, "dataset/src_data")
+    iso_output_path = join(abs_path_src, "dataset/atcosim.iso")
+    dataset_output_path = join(abs_path_src, "dataset/src_data")
 
     # remove existing .iso file
     try:
@@ -151,18 +152,26 @@ def download_dataset():
     print_color(colors.BLUE, "Dataset extracted, done")
 
 
-def download_model():
+def download_model(*args):
     def parse_url():
         global model_url
         return model_url + "ggml-model-whisper-" + model_config["type"] + ".bin"
 
+    source_dir_path = join(abs_path_src, "model/source/")
+    model_output_path = join(source_dir_path, model_config["type"] + ".bin")
+    pt_output_path = join(source_dir_path, model_config["type"] + ".pt")
+
+    # delete model cache (if exists)
+    for entry in listdir(source_dir_path):
+        if ".gitkeep" in entry:
+            continue
+
+        local_model_path = join(source_dir_path, entry)
+        remove(local_model_path)
+
     # download model .bin file
     print_color(colors.BLUE, "Starting model download...")
 
-    model_output_path = join(abs_path_src, "model/source/" + model_config["type"] + ".bin")
-    pt_output_path = join(abs_path_src, "model/source/" + model_config["type"] + ".pt")
-
-    """
     response = requests.get(parse_url())
     if response.status_code == 200:
         with open(model_output_path, "wb") as dataset_file:
@@ -170,11 +179,21 @@ def download_model():
 
     # finished model .bin file
     print_color(colors.BLUE, "Finished model download")
-    """
 
     # converting .bin to .pt for load
+    print_color(colors.BLUE, "Starting model conversion...")
     command = add_args("python3", join(abs_path_src, "model/ggml_to_pt.py"), model_output_path, pt_output_path)
     run_script(command)
+
+    print_color(colors.BLUE, "Finished model conversion")
+
+
+def stash_model(*args):
+    model_old_name = args[0]
+    model_new_name = args[1]
+
+    print(model_old_name)
+    print(model_new_name)
 
 
 # definitions
@@ -220,6 +239,11 @@ info = [
         "name": "download-model",
         "desc": "Download Whisper model from whisper.cpp source",
         "call": download_model
+    },
+    {
+        "name": "stash-model",
+        "desc": "Stash model into /models directory for later usage",
+        "call": stash_model
     }
 ]
 
@@ -233,9 +257,13 @@ print(tabulate([["ATC-whisper project manager"]]))
 print(colors.ENDC)
 
 while True:
-    inp = input(f"{colors.BOLD}Run command (or type 'help' for more info]) {colors.ENDC}")
-    command, params = parse_input(inp)
+    try:
+        inp = input(f"{colors.BOLD}Run command (or type 'help' for more info]) {colors.ENDC}")
+        command, params = parse_input(inp)
 
-    for command_info in info:
-        if command == command_info["name"]:
-            command_info["call"]()
+        for command_info in info:
+            if command == command_info["name"]:
+                command_info["call"](*params)
+    except KeyboardInterrupt:
+        print("\n")
+        continue

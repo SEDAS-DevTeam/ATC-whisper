@@ -36,11 +36,9 @@
 #
 
 import io
-import os
 import sys
 import struct
 import json
-import code
 import torch
 import numpy as np
 import base64
@@ -171,6 +169,7 @@ from pathlib import Path
 #    tokenizer.add_special_tokens(dict(additional_special_tokens=specials))
 #    return tokenizer
 
+
 # ref: https://github.com/openai/gpt-2/blob/master/src/encoder.py
 def bytes_to_unicode():
     """
@@ -182,13 +181,13 @@ def bytes_to_unicode():
     To avoid that, we want lookup tables between utf-8 bytes and unicode strings.
     And avoids mapping to whitespace/control characters the bpe code barfs on.
     """
-    bs = list(range(ord("!"), ord("~")+1))+list(range(ord("¡"), ord("¬")+1))+list(range(ord("®"), ord("ÿ")+1))
+    bs = list(range(ord("!"), ord("~") + 1)) + list(range(ord("¡"), ord("¬") + 1)) + list(range(ord("®"), ord("ÿ") + 1))
     cs = bs[:]
     n = 0
     for b in range(2**8):
         if b not in bs:
             bs.append(b)
-            cs.append(2**8+n)
+            cs.append(2**8 + n)
             n += 1
     cs = [chr(n) for n in cs]
     return dict(zip(bs, cs))
@@ -198,9 +197,9 @@ if len(sys.argv) < 4:
     print("Usage: convert-pt-to-ggml.py model.pt path-to-whisper-repo dir-output [use-f32]\n")
     sys.exit(1)
 
-fname_inp   = Path(sys.argv[1])
+fname_inp = Path(sys.argv[1])
 dir_whisper = Path(sys.argv[2])
-dir_out     = Path(sys.argv[3])
+dir_out = Path(sys.argv[3])
 
 # try to load PyTorch binary data
 try:
@@ -208,7 +207,7 @@ try:
     with io.BytesIO(model_bytes) as fp:
         checkpoint = torch.load(fp, map_location="cpu")
 except Exception:
-    print("Error: failed to load PyTorch model file:" , fname_inp)
+    print("Error: failed to load PyTorch model file:", fname_inp)
     sys.exit(1)
 
 hparams = checkpoint["dims"]
@@ -224,7 +223,7 @@ list_vars = checkpoint["model_state_dict"]
 n_mels = hparams["n_mels"]
 with np.load(dir_whisper / "whisper" / "assets" / "mel_filters.npz") as f:
     filters = torch.from_numpy(f[f"mel_{n_mels}"])
-    #print (filters)
+    #print(filters)
 
 #code.interact(local=locals())
 
@@ -243,7 +242,7 @@ if not tokenizer.is_file():
         sys.exit(1)
 
 byte_encoder = bytes_to_unicode()
-byte_decoder = {v:k for k, v in byte_encoder.items()}
+byte_decoder = {v: k for k, v in byte_encoder.items()}
 
 if tokenizer_type == "tiktoken":
     with open(tokenizer, "rb") as f:
@@ -298,7 +297,7 @@ for key in tokens:
 
 for name in list_vars.keys():
     data = list_vars[name].squeeze().numpy()
-    print("Processing variable: " , name ,  " with shape: ", data.shape)
+    print("Processing variable: ", name, " with shape: ", data.shape)
 
     # reshape conv bias from [n] to [n, 1]
     if name in ["encoder.conv1.bias", "encoder.conv2.bias"]:
@@ -313,8 +312,8 @@ for name in list_vars.keys():
     ftype = 1
     if use_f16:
         if n_dims < 2 or \
-                name == "encoder.conv1.bias"   or \
-                name == "encoder.conv2.bias"   or \
+                name == "encoder.conv1.bias" or \
+                name == "encoder.conv2.bias" or \
                 name == "encoder.positional_embedding" or \
                 name == "decoder.positional_embedding":
             print("  Converting to float32")
@@ -342,5 +341,5 @@ for name in list_vars.keys():
 
 fout.close()
 
-print("Done. Output file: " , fname_out)
+print("Done. Output file: ", fname_out)
 print("")
