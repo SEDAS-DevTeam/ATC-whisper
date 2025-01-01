@@ -1,16 +1,25 @@
 #!/usr/bin/env python
 
 # imports
-import whisper
-import torch
+from train import model, data
 
+import torch
 import sys
+
+# vars
+CUDA = "cpu" # set cpu by default
 
 if __name__ == "__main__":
     # parse arguments
     args = sys.argv[1:]
+    model_type = args[0]
+    CUDA = args[1]
 
-    model_type = [0]
+    # preprocess dataset and load to memory
 
     # load whisper model
-    model = whisper.load_model(model_type)
+    whisper_pipeline = model.WhisperPipeline(model_type,
+                                             CUDA)
+    whisper_pipeline.clean_cache() # clean any residue cache
+    whisper_pipeline.load_pipeline() # load whisper and its tokenizer
+

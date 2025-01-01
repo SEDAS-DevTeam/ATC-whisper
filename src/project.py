@@ -192,8 +192,24 @@ def stash_model(*args):
     model_old_name = args[0]
     model_new_name = args[1]
 
-    print(model_old_name)
-    print(model_new_name)
+    print_color(colors.BLUE, f"Stashing model: {model_old_name} to {model_new_name} ...")
+
+    source_dir_path = join(abs_path_src, "model/source/")
+    models_dir_path = join(abs_path_src, "model/models")
+
+    ggml_path_old = join(source_dir_path, model_old_name + ".bin")
+    pt_path_old = join(source_dir_path, model_old_name + ".pt")
+
+    ggml_path_new = join(models_dir_path, model_new_name + ".bin")
+    pt_path_new = join(models_dir_path, model_new_name + ".pt")
+
+    # move ggml file
+    shutil.move(ggml_path_old, ggml_path_new)
+
+    # move checkpoint file
+    shutil.move(pt_path_old, pt_path_new)
+
+    print_color(colors.BLUE, "Model stashed")
 
 
 # definitions

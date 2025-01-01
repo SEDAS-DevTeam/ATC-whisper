@@ -21,4 +21,5 @@ src
 - [x] Add Whisper download
 - [ ] Add Dataset processing
 - [ ] Finish infer
-- [ ] Add model stashing
+- [x] Add model stashing
+- [ ] Finish whisper loading to torch (preparing for fine-tune)
