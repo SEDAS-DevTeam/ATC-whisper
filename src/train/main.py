@@ -16,7 +16,7 @@ if __name__ == "__main__":
     args = sys.argv[1:]
     model_type = args[0]
     cuda = args[1]
-    checkpoint_path = arg[2]
+    checkpoint_path = args[2]
     txt_path = args[3]
     wav_path = args[4]
 

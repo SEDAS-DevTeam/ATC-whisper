@@ -33,13 +33,13 @@ src
 - `[FRAGMENT]` - irrelevant
 - `[NONSENSE]` - irrelevant
 - `[UNKNOWN]` - irrelevant
-- `~*` - Joined with other spelled characters (+ capitalize?)
+- `~*` - Ignore (Currently, we will only use NATO Alphabet + some acronyms)
 - `<OT></OT>` - removed completely from annotations
 
 ## TODO
 
 - [x] Add Whisper download
-- [ ] Add Dataset processing
+- [x] Add Dataset processing
 - [ ] Dataset cleanup
 - [ ] Finish infer
 - [x] Add model stashing
