@@ -21,9 +21,34 @@ def reparse_annotation(annot_string: str):
     # word prefix removal
     annot_string = annot_string.replace("@", "")
 
-    # word breaks removal
-    # TODO
+    curr_word = ""
+    prev_word = ""
+    prev2_word = ""
 
+    for char in annot_string + " ":
+        if char.isspace():
+            prev2_word = prev_word
+            prev_word = curr_word
+            curr_word = ""
+
+            if len(prev2_word) == 0:
+                continue
+            else:
+                if prev2_word[-1] == "=" and prev_word[0] == "=":
+                    # in case of *= and =* : join together
+                    annot_string = annot_string.replace(prev_word, "").replace(prev2_word, prev2_word[:-1] + prev_word[1:])
+
+                # in case of *= : remove from sentence
+                elif prev2_word[-1] == "=":
+                    annot_string = annot_string.replace(prev2_word, "")
+                elif prev_word[-1] == "=":
+                    annot_string = annot_string.replace(prev_word, "")
+        else:
+            curr_word += char
+
+    annot_string = " ".join(annot_string.split()) # take care of duplicate spaces
+
+    return annot_string
 
 
 class ATCOSIM_dataset(Dataset):
