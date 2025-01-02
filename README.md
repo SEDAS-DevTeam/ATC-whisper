@@ -24,6 +24,7 @@ src
 - `<FL></FL>`
     - when empty (full french language)
     - when inserted into another sequence using <FL> tags
+- `[empty]` - if empty completely
 
 ### Cleaned annotations from text
 - `[HNOISE]` - irrelevant

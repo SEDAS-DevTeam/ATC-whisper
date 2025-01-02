@@ -18,3 +18,4 @@ dependencies:
     - pyyaml
     - tabulate
     - openai-whisper
+    - pandas

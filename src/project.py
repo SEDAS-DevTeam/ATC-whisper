@@ -9,10 +9,11 @@ import requests
 import shutil
 
 # os library import
-from os.path import join
+from os.path import join, isfile
 from os import makedirs, mkdir, remove, listdir
 
 import yaml
+import pandas as pd
 
 abs_path = str(Path(__file__).parents[1])
 abs_path_src = join(abs_path, "src/")
@@ -46,6 +47,49 @@ def parse_input(input_string):
     params = arr[1:]
 
     return command, params
+
+
+def reparse_annotation(annot_string: str):
+    # filler removal
+    irrelevant_fillers = ["[HNOISE]", "[FRAGMENT]", "[NONSENSE]", "[UNKNOWN]", "[EMPTY]"]
+    for tag in irrelevant_fillers:
+        if tag in annot_string:
+            annot_string = annot_string.replace(tag, "")
+
+    # tag removal
+    annot_string = annot_string.replace("<OT>", "").replace("</OT>", "")
+
+    # word prefix removal
+    annot_string = annot_string.replace("@", "")
+
+    curr_word = ""
+    prev_word = ""
+    prev2_word = ""
+
+    for char in annot_string + " ":
+        if char.isspace():
+            prev2_word = prev_word
+            prev_word = curr_word
+            curr_word = ""
+
+            if len(prev2_word) == 0 or len(prev_word) == 0:
+                continue
+            else:
+                print(prev2_word, prev_word)
+                if prev2_word[-1] == "=" and prev_word[0] == "=":
+                    # in case of *= and =* : join together
+                    annot_string = annot_string.replace(prev_word, "").replace(prev2_word, prev2_word[:-1] + prev_word[1:])
+                # in case of *= : remove from sentence
+                elif prev2_word[-1] == "=":
+                    annot_string = annot_string.replace(prev2_word, "")
+                elif prev_word[-1] == "=":
+                    annot_string = annot_string.replace(prev_word, "")
+        else:
+            curr_word += char
+
+    annot_string = " ".join(annot_string.split()) # take care of duplicate spaces
+
+    return annot_string
 
 
 def run_script(command: str):
@@ -96,15 +140,10 @@ def run_model_train(*args):
     cuda       = model_config["compute"]
     checkpoint = model_config["checkpoint_path"]
 
-    txt_path   = dataset_config["txt_path"]
-    wav_path   = dataset_config["wav_path"]
-
     command = add_args(join(abs_path_src, "train/main.py"),
                        model_type,
                        cuda,
-                       join(abs_path, checkpoint),
-                       join(abs_path, txt_path),
-                       join(abs_path, wav_path))
+                       join(abs_path, checkpoint))
     run_script(command)
 
 
@@ -160,6 +199,58 @@ def download_dataset(*args):
     iso_extractor.close()
 
     print_color(colors.BLUE, "Dataset extracted, done")
+
+
+def list_dataset(*args):
+    print_color(colors.BLUE, "Starting dataset listing...")
+
+    data_list = {
+        "wav_source": [],
+        "annot": []
+    }
+
+    def read_annot(path):
+        with open(path) as file:
+            return file.read()
+
+    annot_path = join(abs_path, dataset_config["txt_path"])
+
+    # setup annot files list
+    for category in listdir(annot_path):
+        category_dir = join(annot_path, category)
+        if isfile(category_dir):
+            continue
+        for sub_category in listdir(category_dir):
+            subcategory_dir = join(category_dir, sub_category)
+            for annot_source in listdir(subcategory_dir):
+                # get annotation full path
+                annot_source_full_path = join(subcategory_dir, annot_source)
+
+                # get wav full path
+                wav_source_full_path = join(
+                    subcategory_dir.replace("TXTDATA", "WAVDATA"),
+                    annot_source.replace(".TXT", ".WAV"))
+
+                annot = read_annot(annot_source_full_path)
+
+                # dataset modifications, excluding
+                if "<FL>" in annot or "~" in annot: # skip french, spelled characters
+                    continue
+
+                # rework the rest of the annot
+                annot = reparse_annotation(annot)
+
+                # last cleaning
+                if len(annot) == 0:
+                    continue # skip empty annots
+
+                data_list["wav_source"].append(wav_source_full_path)
+                data_list["annot"].append(annot)
+
+    print_color(colors.BLUE, "Dataset listing done, writing to CSV...")
+    data_frame = pd.DataFrame(data_list)
+    data_frame.to_csv(join(abs_path, dataset_config["data_list_path"]))
+    print_color(colors.BLUE, "Done")
 
 
 def download_model(*args):
@@ -260,6 +351,11 @@ info = [
         "name": "download-dataset",
         "desc": "Download ATCOSIM dataset for whisper training",
         "call": download_dataset
+    },
+    {
+        "name": "list-dataset",
+        "desc": "Create a CSV from ATCOSIM dataset",
+        "call": list_dataset
     },
     {
         "name": "download-model",

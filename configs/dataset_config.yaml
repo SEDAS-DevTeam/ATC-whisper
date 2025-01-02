@@ -1,2 +1,2 @@
 txt_path: "src/dataset/src_data/TXTDATA"
-wav_path: "src/dataset/src_data/WAVDATA"
+data_list_path: "src/dataset/src_data/dataset.csv"
