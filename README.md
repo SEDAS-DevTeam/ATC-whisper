@@ -41,7 +41,8 @@ src
 
 - [x] Add Whisper download
 - [x] Add Dataset processing
-- [ ] Dataset cleanup
+- [x] Dataset cleanup
 - [ ] Finish infer
 - [x] Add model stashing
 - [ ] Finish whisper loading to torch (preparing for fine-tune)
+- [ ] Add wav file parsing and validate

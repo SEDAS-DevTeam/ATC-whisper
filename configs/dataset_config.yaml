@@ -1,2 +1,2 @@
 txt_path: "src/dataset/src_data/TXTDATA"
-data_list_path: "src/dataset/src_data/dataset.csv"
+reparsed_path: "src/dataset/src_data/dataset_reparsed"

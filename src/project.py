@@ -12,8 +12,12 @@ import shutil
 from os.path import join, isfile
 from os import makedirs, mkdir, remove, listdir
 
+# data
 import yaml
 import pandas as pd
+import torch
+import torchaudio
+from torchaudio.transforms import Resample
 
 abs_path = str(Path(__file__).parents[1])
 abs_path_src = join(abs_path, "src/")
@@ -75,7 +79,6 @@ def reparse_annotation(annot_string: str):
             if len(prev2_word) == 0 or len(prev_word) == 0:
                 continue
             else:
-                print(prev2_word, prev_word)
                 if prev2_word[-1] == "=" and prev_word[0] == "=":
                     # in case of *= and =* : join together
                     annot_string = annot_string.replace(prev_word, "").replace(prev2_word, prev2_word[:-1] + prev_word[1:])
@@ -173,12 +176,12 @@ def download_dataset(*args):
     # remove existing .iso file
     try:
         remove(iso_output_path)
-
-        # recreate source directory
         shutil.rmtree(dataset_output_path)
-        mkdir(dataset_output_path)
     except FileNotFoundError:
         pass
+
+    # recreate source directory
+    mkdir(dataset_output_path)
 
     # download dataset .iso file
     print_color(colors.BLUE, "Starting dataset download...")
@@ -201,19 +204,53 @@ def download_dataset(*args):
     print_color(colors.BLUE, "Dataset extracted, done")
 
 
-def list_dataset(*args):
-    print_color(colors.BLUE, "Starting dataset listing...")
+def parse_dataset(*args):
+    def read_annot(path):
+        with open(path) as file:
+            return file.read()
+
+    def read_wav(path):
+        duration = 30
+
+        waveform, sample_rate = torchaudio.load(path)
+
+        # resample
+        if sample_rate != target_sample_rate:
+            resampler = Resample(orig_freq=sample_rate, new_freq=target_sample_rate)
+            waveform = resampler(waveform)
+
+        # truncate or pad to 30 seconds
+        num_samples = target_sample_rate * duration
+        if waveform.size(1) > num_samples:
+            waveform = waveform[:, :num_samples]  # truncate
+        elif waveform.size(1) < num_samples:
+            padding = num_samples - waveform.size(1)
+            waveform = torch.nn.functional.pad(waveform, (0, padding))  # pad
+
+        return waveform
+
+    print_color(colors.BLUE, "Starting dataset parsing...")
+
+    annot_path = join(abs_path, dataset_config["txt_path"])
+    reparsed_dataset_path = join(abs_path, dataset_config["reparsed_path"])
+    reparsed_data_path = join(reparsed_dataset_path, "data")
+    target_sample_rate = 16000
+
+    try:
+        shutil.rmtree(reparsed_dataset_path)
+    except FileNotFoundError:
+        pass
+
+    # recreate source directory
+    mkdir(reparsed_dataset_path)
+    mkdir(reparsed_data_path)
 
     data_list = {
         "wav_source": [],
         "annot": []
     }
 
-    def read_annot(path):
-        with open(path) as file:
-            return file.read()
-
-    annot_path = join(abs_path, dataset_config["txt_path"])
+    data_i = 0
 
     # setup annot files list
     for category in listdir(annot_path):
@@ -223,6 +260,7 @@ def list_dataset(*args):
         for sub_category in listdir(category_dir):
             subcategory_dir = join(category_dir, sub_category)
             for annot_source in listdir(subcategory_dir):
+
                 # get annotation full path
                 annot_source_full_path = join(subcategory_dir, annot_source)
 
@@ -233,7 +271,16 @@ def list_dataset(*args):
 
                 annot = read_annot(annot_source_full_path)
 
-                # dataset modifications, excluding
+                #
+                # Waveform modifications
+                #
+
+                wav = read_wav(wav_source_full_path)
+                torchaudio.save(join(reparsed_data_path, f"data{data_i}.wav"), wav, target_sample_rate)
+
+                #
+                # Annotation modifications
+                #
                 if "<FL>" in annot or "~" in annot: # skip french, spelled characters
                     continue
 
@@ -247,9 +294,11 @@ def list_dataset(*args):
                 data_list["wav_source"].append(wav_source_full_path)
                 data_list["annot"].append(annot)
 
+                data_i += 1
+
     print_color(colors.BLUE, "Dataset listing done, writing to CSV...")
     data_frame = pd.DataFrame(data_list)
-    data_frame.to_csv(join(abs_path, dataset_config["data_list_path"]))
+    data_frame.to_csv(join(reparsed_dataset_path, "dataset.csv"))
     print_color(colors.BLUE, "Done")
 
 
@@ -353,9 +402,9 @@ info = [
         "call": download_dataset
     },
     {
-        "name": "list-dataset",
+        "name": "parse-dataset",
         "desc": "Create a CSV from ATCOSIM dataset",
-        "call": list_dataset
+        "call": parse_dataset
     },
     {
         "name": "download-model",
