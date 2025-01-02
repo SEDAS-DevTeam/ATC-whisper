@@ -45,4 +45,4 @@ src
 - [ ] Finish infer
 - [x] Add model stashing
 - [ ] Finish whisper loading to torch (preparing for fine-tune)
-- [ ] Add wav file parsing and validate
+- [x] Add wav file parsing and validate

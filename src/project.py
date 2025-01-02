@@ -139,14 +139,16 @@ def print_info(*args):
 
 def run_model_train(*args):
     # reparse config into args
-    model_type = model_config["type"]
-    cuda       = model_config["compute"]
-    checkpoint = model_config["checkpoint_path"]
+    model_type   = model_config["type"]
+    cuda         = model_config["compute"]
+    checkpoint   = model_config["checkpoint_path"]
+    dataset_path = dataset_config["reparsed_path"]
 
     command = add_args(join(abs_path_src, "train/main.py"),
                        model_type,
                        cuda,
-                       join(abs_path, checkpoint))
+                       join(abs_path, checkpoint),
+                       join(abs_path, dataset_path))
     run_script(command)
 
 

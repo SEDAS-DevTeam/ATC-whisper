@@ -17,15 +17,14 @@ if __name__ == "__main__":
     model_type = args[0]
     cuda = args[1]
     checkpoint_path = args[2]
-    txt_path = args[3]
-    wav_path = args[4]
+    dataset_path = args[3]
 
     # preprocess dataset and load to memory
-    dataset = data.ATCOSIM_dataset(wav_path,
-                                   txt_path)
-
-    exit(0) #TODO: just for testing
-
+    dataset = data.ATCOSIM_dataset(dataset_path)
+    train_dataset, test_dataset, val_dataset = data.split_to_subsets(dataset, [0.7, 0.2, 0.1])
+    train_dataloader, test_dataloader, val_dataloader = data.create_dataloaders(train_dataset,
+                                                                                test_dataset,
+                                                                                val_dataset)
     # load whisper model
     whisper_pipeline = model.WhisperPipeline(model_type,
                                              cuda,
