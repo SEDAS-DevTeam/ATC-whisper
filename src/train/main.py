@@ -7,6 +7,7 @@ import data
 import torch
 import lightning
 import sys
+import time
 
 # vars
 cuda = "cpu" # set cpu by default
@@ -25,6 +26,8 @@ if __name__ == "__main__":
     train_dataloader, test_dataloader, val_dataloader = data.create_dataloaders(train_dataset,
                                                                                 test_dataset,
                                                                                 val_dataset)
+    time.sleep(2)
+    
     # load whisper model
     whisper_pipeline = model.WhisperPipeline(model_type,
                                              cuda)

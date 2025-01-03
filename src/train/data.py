@@ -14,6 +14,8 @@ class ATCOSIM_dataset(Dataset):
         # read annot csv
         self.annot_data = pd.read_csv(self.annot_data_path)
 
+        print("dataset created")
+
     def __len__(self):
         return self.annot_data.shape[0]
 
@@ -47,5 +49,7 @@ def create_dataloaders(train, test, val):
     val_dataloader = DataLoader(val,
                                 batch_size=8,
                                 shuffle=True)
+    
+    print("dataloaders created")
 
     return train_dataloader, test_dataloader, val_dataloader

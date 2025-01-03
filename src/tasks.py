@@ -2,11 +2,11 @@
 
 # imports
 from tabulate import tabulate
-import subprocess
 from pathlib import Path
 import pycdlib
 import requests
 import shutil
+from invoke import task
 
 # os library import
 from os.path import join, isfile
@@ -95,30 +95,12 @@ def reparse_annotation(annot_string: str):
     return annot_string
 
 
-def run_script(command: str):
-    command_split = command.split(" ")
-    process = subprocess.Popen(command_split, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-
-    try:
-        for line in iter(process.stdout.readline, ''):
-            print(line, end='')
-    except KeyboardInterrupt:
-        print("\n")
-        print_color(colors.BLUE, "Exiting...")
-
-        process.terminate()
-        process.wait()
-    finally:
-        if process.stdout:
-            process.stdout.close()
-        if process.stderr:
-            for line in iter(process.stderr.readline, ''):
-                print(line, end='')
-            process.stderr.close()
-        process.terminate()
-        process.wait()
-
-        print_color(colors.BLUE, "Process terminated")
+# commands in dict
+def print_info(*args):
+    out_string = ""
+    for item in info:
+        out_string += colors.UNDERLINE + item["name"] + colors.ENDC + " " + chars.ARROW + "\n" + chars.TAB + item["desc"] + "\n"
+    print(out_string)
 
 
 def add_args(command, *args):
@@ -129,15 +111,8 @@ def add_args(command, *args):
     return res_command
 
 
-# commands in dict
-def print_info(*args):
-    out_string = ""
-    for item in info:
-        out_string += colors.UNDERLINE + item["name"] + colors.ENDC + " " + chars.ARROW + "\n" + chars.TAB + item["desc"] + "\n"
-    print(out_string)
-
-
-def run_model_train(*args):
+@task
+def run_train(context):
     # reparse config into args
     model_type   = model_config["type"]
     cuda         = model_config["compute"]
@@ -149,14 +124,16 @@ def run_model_train(*args):
                        cuda,
                        join(abs_path, checkpoint),
                        join(abs_path, dataset_path))
-    run_script(command)
+    context.run(command, pty=True)
 
 
-def run_model_infer(*args):
+@task
+def run_infer(context):
     print("Running infer!")
 
 
-def download_dataset(*args):
+@task
+def download_dataset(context):
     def extract_directory(iso: pycdlib.PyCdlib, path, output_path):
         for entry in iso.list_children(iso_path=path):
             name = entry.file_identifier().decode('utf-8')
@@ -206,7 +183,8 @@ def download_dataset(*args):
     print_color(colors.BLUE, "Dataset extracted, done")
 
 
-def parse_dataset(*args):
+@task
+def parse_dataset(context):
     def read_annot(path):
         with open(path) as file:
             return file.read()
@@ -304,56 +282,17 @@ def parse_dataset(*args):
     print_color(colors.BLUE, "Done")
 
 
-def download_model(*args):
-    # DEPRECATED
-    """
-    def parse_url():
-        global model_url
-        return model_url + "ggml-model-whisper-" + model_config["type"] + ".bin"
-
-    source_dir_path = join(abs_path_src, "model/source/")
-    model_output_path = join(source_dir_path, model_config["type"] + ".bin")
-    pt_output_path = join(source_dir_path, model_config["type"] + ".pt")
-
-    # delete model cache (if exists)
-    for entry in listdir(source_dir_path):
-        if ".gitkeep" in entry:
-            continue
-
-        local_model_path = join(source_dir_path, entry)
-        remove(local_model_path)
-
-    # download model .bin file
-    print_color(colors.BLUE, "Starting model download...")
-
-    response = requests.get(parse_url())
-    if response.status_code == 200:
-        with open(model_output_path, "wb") as dataset_file:
-            dataset_file.write(response.content)
-
-    # finished model .bin file
-    print_color(colors.BLUE, "Finished model download")
-
-    # converting .bin to .pt for load
-    print_color(colors.BLUE, "Starting model conversion...")
-    command = add_args("python3", join(abs_path_src, "model/ggml_to_pt.py"), model_output_path, pt_output_path)
-    run_script(command)
-
-    print_color(colors.BLUE, "Finished model conversion")
-    """
-
-    # instead use this :)
+@task
+def download_model(context):
     model_type = model_config["type"]
 
     command = add_args(join(abs_path_src, "train/model.py"),
                        model_type)
-    run_script(command)
+    context.run(command, pty=True)
 
 
-def stash_model(*args):
-    model_old_name = args[0]
-    model_new_name = args[1]
-
+@task
+def stash_model(context, model_old_name, model_new_name):
     print_color(colors.BLUE, f"Stashing model: {model_old_name} to {model_new_name} ...")
 
     source_dir_path = join(abs_path_src, "model/source/")
@@ -401,12 +340,12 @@ info = [
     {
         "name": "run-train",
         "desc": "run model training sequence",
-        "call": run_model_train
+        "call": run_train
     },
     {
         "name": "run-infer",
         "desc": "run example infer, params: [mic, local]",
-        "call": run_model_infer
+        "call": run_infer
     },
     {
         "name": "download-dataset",
@@ -438,15 +377,3 @@ model_config = load_config(model_path)
 print(colors.BLUE)
 print(tabulate([["ATC-whisper project manager"]]))
 print(colors.ENDC)
-
-while True:
-    try:
-        inp = input(f"{colors.BOLD}Run command (or type 'help' for more info]) {colors.ENDC}")
-        command, params = parse_input(inp)
-
-        for command_info in info:
-            if command == command_info["name"]:
-                command_info["call"](*params)
-    except KeyboardInterrupt:
-        print("\n")
-        continue
