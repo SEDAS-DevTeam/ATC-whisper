@@ -27,7 +27,6 @@ if __name__ == "__main__":
                                                                                 val_dataset)
     # load whisper model
     whisper_pipeline = model.WhisperPipeline(model_type,
-                                             cuda,
-                                             checkpoint_path)
+                                             cuda)
     whisper_pipeline.clean_cache() # clean any residue cache
     whisper_pipeline.load_pipeline() # load whisper and its tokenizer

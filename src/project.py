@@ -305,6 +305,8 @@ def parse_dataset(*args):
 
 
 def download_model(*args):
+    # DEPRECATED
+    """
     def parse_url():
         global model_url
         return model_url + "ggml-model-whisper-" + model_config["type"] + ".bin"
@@ -338,6 +340,14 @@ def download_model(*args):
     run_script(command)
 
     print_color(colors.BLUE, "Finished model conversion")
+    """
+
+    # instead use this :)
+    model_type = model_config["type"]
+
+    command = add_args(join(abs_path_src, "train/model.py"),
+                       model_type)
+    run_script(command)
 
 
 def stash_model(*args):
@@ -409,15 +419,15 @@ info = [
         "call": parse_dataset
     },
     {
+        "name": "stash-model",
+        "desc": "Stash model into /models directory for later usage",
+        "call": stash_model
+    },
+    {
         "name": "download-model",
         "desc": "Download Whisper model from whisper.cpp source",
         "call": download_model
     },
-    {
-        "name": "stash-model",
-        "desc": "Stash model into /models directory for later usage",
-        "call": stash_model
-    }
 ]
 
 # load all configs

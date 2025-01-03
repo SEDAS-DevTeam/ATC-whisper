@@ -17,6 +17,6 @@ dependencies:
     - pycdlib
     - pyyaml
     - tabulate
-    - openai-whisper
+    - transformers
     - pandas
     - PySoundFile
