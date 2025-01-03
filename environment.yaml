@@ -18,5 +18,6 @@ dependencies:
     - pyyaml
     - tabulate
     - transformers
+    - evaluate
     - pandas
     - PySoundFile

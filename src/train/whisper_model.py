@@ -2,20 +2,29 @@
 
 # imports
 import torch
-import lightning
 
 # whisper import
 from transformers import (
+    # Whisper
     WhisperTokenizer,
     WhisperProcessor,
     WhisperFeatureExtractor,
-    WhisperForConditionalGeneration
+    WhisperForConditionalGeneration,
+
+    # Huggingface trainer
+    Seq2SeqTrainingArguments,
+    Seq2SeqTrainer
 )
+# WER metric import
+import evaluate
 
 # tools
 import sys
 
 
+#
+# Whisper model
+#
 class WhisperPipeline:
     def __init__(self,
                  model_type,
@@ -45,7 +54,40 @@ class WhisperPipeline:
 
         print("Whisper loaded successfully")
 
+    def create_training_args(self):
+        self.arguments = Seq2SeqTrainingArguments(
 
+        )
+
+
+#
+# Metric
+#
+def create_metric(name):
+    return evaluate.load(name)
+
+
+def calculate(metric: evaluate.Metric, tokenizer, pred):
+    pred_ids = pred.predictions
+    label_ids = pred.label_ids
+
+    label_ids[label_ids == -100] = tokenizer.pad_token_id
+
+    pred_str = tokenizer.batch_decode(pred_ids, skip_special_tokens=True)
+    label_str = tokenizer.batch_decode(label_ids, skip_special_tokens=True)
+
+    wer = 100 * metric.compute(predictions=pred_str, references=label_str)
+    return {"wer": wer}
+
+
+#
+# Trainer
+#
+def create_trainer(training_arguments):
+    pass
+
+
+# Runtime test
 if __name__ == "__main__":
     test_whisper_pipeline = WhisperPipeline(sys.argv[1])
     test_whisper_pipeline.clean_cache()

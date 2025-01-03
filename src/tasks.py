@@ -286,7 +286,7 @@ def parse_dataset(context):
 def download_model(context):
     model_type = model_config["type"]
 
-    command = add_args(join(abs_path_src, "train/model.py"),
+    command = add_args(join(abs_path_src, "train/whisper_model.py"),
                        model_type)
     context.run(command, pty=True)
 
