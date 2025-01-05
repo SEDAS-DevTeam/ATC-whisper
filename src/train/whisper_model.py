@@ -54,9 +54,26 @@ class WhisperPipeline:
 
         print("Whisper loaded successfully")
 
-    def create_training_args(self):
+    def create_training_args(self, batch_size, epochs):
         self.arguments = Seq2SeqTrainingArguments(
-
+            output_dir=self.checkpoint_path, #TODO: Check
+            per_device_eval_batch_size=batch_size,
+            per_device_train_batch_size=batch_size,
+            gradient_accumulation_steps=1,
+            learning_rate=0.00001,
+            warmup_steps=500,
+            max_steps=5000,
+            gradient_checkpointing=True,
+            fp16=True,
+            eval_strategy="epoch",
+            predict_with_generate=True,
+            generation_max_length=225,
+            load_best_model_at_end=True,
+            metric_for_best_model="wer",
+            push_to_hub=False,
+            save_total_limit=2,
+            report_to=["tensorboard"],
+            num_train_epochs=epochs
         )
 
 
@@ -83,8 +100,23 @@ def calculate(metric: evaluate.Metric, tokenizer, pred):
 #
 # Trainer
 #
-def create_trainer(training_arguments):
-    pass
+def create_trainer(training_arguments,
+                   loaded_model,
+                   train_dataset,
+                   eval_dataset,
+                   metrics,
+                   data_collator,
+                   tokenizer
+                   ):
+    return Seq2SeqTrainer(
+        args=training_arguments,
+        model=loaded_model,
+        train_dataset=train_dataset,
+        eval_dataset=eval_dataset,
+        compute_metrics=metrics,
+        data_collator=data_collator,
+        tokenizer=tokenizer
+    )
 
 
 # Runtime test

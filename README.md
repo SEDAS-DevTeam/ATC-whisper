@@ -44,5 +44,8 @@ src
 - [x] Dataset cleanup
 - [ ] Finish infer
 - [x] Add model stashing
-- [ ] Finish whisper loading to torch (preparing for fine-tune)
+- [x] Finish whisper loading to torch (preparing for fine-tune)
 - [x] Add wav file parsing and validate
+- [ ] Add tokenize to data
+- [ ] Cleanup TODOs
+- [ ] Recheck everything + add DataCollator

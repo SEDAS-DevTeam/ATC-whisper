@@ -39,4 +39,5 @@ if __name__ == "__main__":
                                                      tokenizer=whisper_pipeline.tokenizer))
 
     whisper_pipeline.create_training_args()
-    whisper_model.create_trainer(whisper_pipeline.arguments)
+    trainer = whisper_model.create_trainer(whisper_pipeline.arguments)
+    trainer.train()
