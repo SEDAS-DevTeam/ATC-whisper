@@ -21,3 +21,4 @@ dependencies:
     - evaluate
     - pandas
     - PySoundFile
+    - gradio
