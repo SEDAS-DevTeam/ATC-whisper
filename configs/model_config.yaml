@@ -1,3 +1,0 @@
-type: "base.en"
-compute: "cuda"
-checkpoint_path: "src/model/source/base.en.pt"

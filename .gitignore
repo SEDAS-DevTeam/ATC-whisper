@@ -2,12 +2,5 @@
 /src/model/source/*
 !/src/model/source/.gitkeep
 
-/src/model/models/*
-!/src/model/models/.gitkeep
-
-# Dataset generation path
-/src/dataset/*
-!/src/dataset/.gitkeep
-
 # Python pregenerated files/folders
 /src/train/__pycache__

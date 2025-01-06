@@ -3,21 +3,18 @@
 # imports
 from tabulate import tabulate
 from pathlib import Path
-import pycdlib
 import requests
-import shutil
 from invoke import task
 
 # os library import
-from os.path import join, isfile
-from os import makedirs, mkdir, remove, listdir
+from os import remove
+from os.path import join
 
 # data
 import yaml
-import pandas as pd
-import torch
-import torchaudio
-from torchaudio.transforms import Resample
+
+# conversion
+from model.conversion import bin_to_pt, pretrained_to_pt, st_to_pt, pt_to_st, pt_to_ggml, ggml_to_pt
 
 abs_path = str(Path(__file__).parents[1])
 abs_path_src = join(abs_path, "src/")
@@ -94,20 +91,21 @@ def reparse_annotation(annot_string: str):
     return annot_string
 
 
-# commands in dict
-def print_info(*args):
-    out_string = ""
-    for item in info:
-        out_string += colors.UNDERLINE + item["name"] + colors.ENDC + " " + chars.ARROW + "\n" + chars.TAB + item["desc"] + "\n"
-    print(out_string)
-
-
 def add_args(command, *args):
     res_command = command
     for arg in args:
         res_command += " " + arg
 
     return res_command
+
+
+# commands in dict
+@task
+def help(*args):
+    out_string = ""
+    for item in info:
+        out_string += colors.UNDERLINE + item["name"] + colors.ENDC + " " + chars.ARROW + "\n" + chars.TAB + item["desc"] + "\n"
+    print(out_string)
 
 
 @task
@@ -141,17 +139,28 @@ def convert_model(context, conversion_type):
     st_path = join(abs_path_src, "model/source/atc-whisper.safetensors")
     pt_path = join(abs_path_src, "model/source/atc-whisper.pt")
     ggml_path = join(abs_path_src, "model/source/atc-whisper.bin")
+    bin_path = join(abs_path_src, "model/source/atc-whisper-torch.bin")
 
     if conversion_type == "st-to-ggml":
         print_color(colors.BLUE, "Converting safetensor to pytorch")
-        context.run()
+        st_to_pt(st_path, pt_path)
         print_color(colors.BLUE, "Converting pytorch to ggml")
-        context.run()
+        pt_to_ggml(pt_path, ggml_path)
     elif conversion_type == "ggml-to-st":
-        print_color(colors.BLUE, "Converting safetensor to pytorch")
-        context.run()
+        print_color(colors.BLUE, "Converting ggml to pytorch")
+        ggml_to_pt(ggml_path, pt_path)
+        print_color(colors.BLUE, "Converting pytorch to safetensor")
+        pt_to_st(pt_path, st_path)
+    elif conversion_type == "bin-to-ggml":
+        print_color(colors.BLUE, "Converting bin to pytorch")
+        bin_to_pt(bin_path, pt_path)
         print_color(colors.BLUE, "Converting pytorch to ggml")
-        context.run()
+        pt_to_ggml(pt_path, ggml_path)
+    elif conversion_type == "pretrained-to-ggml":
+        print_color(colors.BLUE, "Converting bin to pytorch")
+        pretrained_to_pt(pt_path)
+        print_color(colors.BLUE, "Converting pytorch to ggml")
+        pt_to_ggml(pt_path, "openai/whisper-medium", ggml_path)
 
 
 # definitions
@@ -176,7 +185,7 @@ info = [
     {
         "name": "help",
         "desc": "prints out helper",
-        "call": print_info
+        "call": help
     },
     {
         "name": "run-infer",
