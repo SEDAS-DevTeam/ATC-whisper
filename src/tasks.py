@@ -26,8 +26,7 @@ abs_path_src = join(abs_path, "src/")
 dataset_path = join(abs_path, "configs/dataset_config.yaml")
 model_path = join(abs_path, "configs/model_config.yaml")
 
-dataset_url = "http://www2.spsc.tugraz.at/databases/ATCOSIM/.ISO/atcosim.iso"
-model_url = "https://ggml.ggerganov.com/"
+model_url = "https://huggingface.co/BUT-FIT/whisper-ATC-czech-full/resolve/main/model.safetensors?download=true"
 
 
 # functions
@@ -112,205 +111,47 @@ def add_args(command, *args):
 
 
 @task
-def run_train(context):
-    # reparse config into args
-    model_type   = model_config["type"]
-    cuda         = model_config["compute"]
-    checkpoint   = model_config["checkpoint_path"]
-    dataset_path = dataset_config["reparsed_path"]
-
-    command = add_args(join(abs_path_src, "train/main.py"),
-                       model_type,
-                       cuda,
-                       join(abs_path, checkpoint),
-                       join(abs_path, dataset_path))
-    context.run(command, pty=True)
-
-
-@task
 def run_infer(context):
     print("Running infer!")
 
 
 @task
-def download_dataset(context):
-    def extract_directory(iso: pycdlib.PyCdlib, path, output_path):
-        for entry in iso.list_children(iso_path=path):
-            name = entry.file_identifier().decode('utf-8')
-            if name == "." or name == "..":
-                continue
-
-            child_path = join(path, name)
-            if entry.is_dir():
-                new_output_path = join(output_path, name)
-                makedirs(new_output_path, exist_ok=True)
-                extract_directory(iso, child_path, new_output_path)
-            else:
-                new_output_path = join(output_path, name)
-                iso.get_file_from_iso(local_path=new_output_path, iso_path=child_path)
-
-    iso_output_path = join(abs_path_src, "dataset/atcosim.iso")
-    dataset_output_path = join(abs_path_src, "dataset/src_data")
-
-    # remove existing .iso file
-    try:
-        remove(iso_output_path)
-        shutil.rmtree(dataset_output_path)
-    except FileNotFoundError:
-        pass
-
-    # recreate source directory
-    mkdir(dataset_output_path)
-
-    # download dataset .iso file
-    print_color(colors.BLUE, "Starting dataset download...")
-
-    response = requests.get(dataset_url)
-    if response.status_code == 200:
-        with open(iso_output_path, "wb") as dataset_file:
-            dataset_file.write(response.content)
-
-    print_color(colors.BLUE, "Finished dataset download")
-
-    # extract dataset .iso file
-    print_color(colors.BLUE, "Starting dataset extraction...")
-    iso_extractor = pycdlib.PyCdlib()
-    iso_extractor.open(iso_output_path)
-
-    extract_directory(iso_extractor, "/", dataset_output_path)
-    iso_extractor.close()
-
-    print_color(colors.BLUE, "Dataset extracted, done")
-
-
-@task
-def parse_dataset(context):
-    def read_annot(path):
-        with open(path) as file:
-            return file.read()
-
-    def read_wav(path):
-        duration = 30
-
-        waveform, sample_rate = torchaudio.load(path)
-
-        # resample
-        if sample_rate != target_sample_rate:
-            resampler = Resample(orig_freq=sample_rate, new_freq=target_sample_rate)
-            waveform = resampler(waveform)
-
-        # truncate or pad to 30 seconds
-        num_samples = target_sample_rate * duration
-        if waveform.size(1) > num_samples:
-            waveform = waveform[:, :num_samples]  # truncate
-        elif waveform.size(1) < num_samples:
-            padding = num_samples - waveform.size(1)
-            waveform = torch.nn.functional.pad(waveform, (0, padding))  # pad
-
-        return waveform
-
-    print_color(colors.BLUE, "Starting dataset parsing...")
-
-    annot_path = join(abs_path, dataset_config["txt_path"])
-    reparsed_dataset_path = join(abs_path, dataset_config["reparsed_path"])
-    reparsed_data_path = join(reparsed_dataset_path, "data")
-    target_sample_rate = 16000
-
-    try:
-        shutil.rmtree(reparsed_dataset_path)
-    except FileNotFoundError:
-        pass
-
-    # recreate source directory
-    mkdir(reparsed_dataset_path)
-    mkdir(reparsed_data_path)
-
-    data_list = {
-        "wav_source": [],
-        "annot": []
-    }
-
-    data_i = 0
-
-    # setup annot files list
-    for category in listdir(annot_path):
-        category_dir = join(annot_path, category)
-        if isfile(category_dir):
-            continue
-        for sub_category in listdir(category_dir):
-            subcategory_dir = join(category_dir, sub_category)
-            for annot_source in listdir(subcategory_dir):
-
-                # get annotation full path
-                annot_source_full_path = join(subcategory_dir, annot_source)
-
-                # get wav full path
-                wav_source_full_path = join(
-                    subcategory_dir.replace("TXTDATA", "WAVDATA"),
-                    annot_source.replace(".TXT", ".WAV"))
-
-                annot = read_annot(annot_source_full_path)
-
-                #
-                # Waveform modifications
-                #
-
-                wav = read_wav(wav_source_full_path)
-                torchaudio.save(join(reparsed_data_path, f"data{data_i}.wav"), wav, target_sample_rate)
-
-                #
-                # Annotation modifications
-                #
-                if "<FL>" in annot or "~" in annot: # skip french, spelled characters
-                    continue
-
-                # rework the rest of the annot
-                annot = reparse_annotation(annot)
-
-                # last cleaning
-                if len(annot) == 0:
-                    continue # skip empty annots
-
-                data_list["wav_source"].append(wav_source_full_path)
-                data_list["annot"].append(annot)
-
-                data_i += 1
-
-    print_color(colors.BLUE, "Dataset listing done, writing to CSV...")
-    data_frame = pd.DataFrame(data_list)
-    data_frame.to_csv(join(reparsed_dataset_path, "dataset.csv"))
-    print_color(colors.BLUE, "Done")
-
-
-@task
 def download_model(context):
-    model_type = model_config["type"]
+    print_color(colors.BLUE, "Starting model download...")
 
-    command = add_args(join(abs_path_src, "train/whisper_model.py"),
-                       model_type)
-    context.run(command, pty=True)
+    model_output_path = join(abs_path_src, "model/source/atc-whisper.safetensors")
+
+    # Remove original one if downloaded
+    try:
+        remove(model_path)
+    except FileNotFoundError:
+        pass
+
+    # fetch from huggingface
+    response = requests.get(model_url)
+    if response.status_code == 200:
+        with open(model_output_path, "wb") as model_file:
+            model_file.write(response.content)
+
+    print_color(colors.BLUE, "Model download finished")
 
 
 @task
-def stash_model(context, model_old_name, model_new_name):
-    print_color(colors.BLUE, f"Stashing model: {model_old_name} to {model_new_name} ...")
+def convert_model(context, conversion_type):
+    st_path = join(abs_path_src, "model/source/atc-whisper.safetensors")
+    pt_path = join(abs_path_src, "model/source/atc-whisper.pt")
+    ggml_path = join(abs_path_src, "model/source/atc-whisper.bin")
 
-    source_dir_path = join(abs_path_src, "model/source/")
-    models_dir_path = join(abs_path_src, "model/models")
-
-    ggml_path_old = join(source_dir_path, model_old_name + ".bin")
-    pt_path_old = join(source_dir_path, model_old_name + ".pt")
-
-    ggml_path_new = join(models_dir_path, model_new_name + ".bin")
-    pt_path_new = join(models_dir_path, model_new_name + ".pt")
-
-    # move ggml file
-    shutil.move(ggml_path_old, ggml_path_new)
-
-    # move checkpoint file
-    shutil.move(pt_path_old, pt_path_new)
-
-    print_color(colors.BLUE, "Model stashed")
+    if conversion_type == "st-to-ggml":
+        print_color(colors.BLUE, "Converting safetensor to pytorch")
+        context.run()
+        print_color(colors.BLUE, "Converting pytorch to ggml")
+        context.run()
+    elif conversion_type == "ggml-to-st":
+        print_color(colors.BLUE, "Converting safetensor to pytorch")
+        context.run()
+        print_color(colors.BLUE, "Converting pytorch to ggml")
+        context.run()
 
 
 # definitions
@@ -338,42 +179,23 @@ info = [
         "call": print_info
     },
     {
-        "name": "run-train",
-        "desc": "run model training sequence",
-        "call": run_train
-    },
-    {
         "name": "run-infer",
         "desc": "run example infer, params: [mic, local]",
         "call": run_infer
     },
     {
-        "name": "download-dataset",
-        "desc": "Download ATCOSIM dataset for whisper training",
-        "call": download_dataset
-    },
-    {
-        "name": "parse-dataset",
-        "desc": "Create a CSV from ATCOSIM dataset",
-        "call": parse_dataset
-    },
-    {
-        "name": "stash-model",
-        "desc": "Stash model into /models directory for later usage",
-        "call": stash_model
-    },
-    {
         "name": "download-model",
-        "desc": "Download Whisper model from whisper.cpp source",
+        "desc": "download Whisper model from BUT-FIT source",
         "call": download_model
     },
+    {
+        "name": "convert-model",
+        "desc": "convert model format",
+        "call": convert_model
+    }
 ]
 
-# load all configs
-dataset_config = load_config(dataset_path)
-model_config = load_config(model_path)
-
-# start to in program loop
+# start program
 print(colors.BLUE)
 print(tabulate([["ATC-whisper project manager"]]))
 print(colors.ENDC)
