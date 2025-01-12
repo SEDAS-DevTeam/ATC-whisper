@@ -337,6 +337,7 @@ def pretrained_to_pt(fname_out):
 
     model = WhisperForConditionalGeneration.from_pretrained("BUT-FIT/whisper-ATC-czech-full")
     state_dict = model.state_dict()
+    model_dict = {}
 
     # Rename layers
     for key in list(state_dict.keys())[:]:
@@ -347,9 +348,10 @@ def pretrained_to_pt(fname_out):
     whisper_model = whisper.load_model("medium")
     whisper_model.load_state_dict(state_dict)
 
-    print(state_dict)
+    model_dict["dims"] = whisper_model.dims.__dict__ # add mel_spectogram setup to state_dict
+    model_dict["model_state_dict"] = state_dict
 
     print("Converted to whisper")
 
-    torch.save(state_dict, fname_out)
+    torch.save(model_dict, fname_out)
     print("Model successfully saved")
