@@ -1,0 +1,14 @@
+{
+  "configurations": [
+    {
+      "name": "Debug invoke",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${env:HOME}/miniforge3/envs/atc_whisper/bin/invoke",
+      "args": ["${command:pickArgs}"],
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "cwd": "${workspaceFolder}/src"
+    }
+  ]
+}

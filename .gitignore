@@ -4,3 +4,4 @@
 
 # Python pregenerated files/folders
 /src/train/__pycache__
+/src/model/__pycache__
