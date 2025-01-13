@@ -19,6 +19,8 @@ import safetensors.torch
 from transformers import pipeline
 import re
 import whisper
+from pathlib import Path
+
 
 device = "cuda:0" if torch.cuda.is_available() else "cpu"
 
@@ -112,6 +114,9 @@ def ggml_to_pt(fname_inp, fname_out):
 
 
 def pt_to_ggml(fname_inp, dir_whisper, fname_out):
+    dir_whisper = Path(dir_whisper)
+    fname_out = Path(fname_out)
+
     def bytes_to_unicode():
         """
         Returns list of utf-8 byte and a corresponding list of unicode strings.

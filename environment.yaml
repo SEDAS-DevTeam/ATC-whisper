@@ -23,3 +23,4 @@ dependencies:
     - PySoundFile
     - gradio
     - safetensors
+    - gitpython

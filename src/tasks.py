@@ -8,10 +8,11 @@ from invoke import task
 
 # os library import
 from os import remove
-from os.path import join
+from os.path import join, exists, dirname
 
 # data
 import yaml
+from git import Repo
 
 # conversion
 from model.conversion import bin_to_pt, pretrained_to_pt, st_to_pt, pt_to_st, pt_to_ggml, ggml_to_pt
@@ -22,8 +23,10 @@ abs_path_src = join(abs_path, "src/")
 # config paths
 dataset_path = join(abs_path, "configs/dataset_config.yaml")
 model_path = join(abs_path, "configs/model_config.yaml")
+whisper_path = join(abs_path_src, "model/source/whisper")
 
 model_url = "https://huggingface.co/BUT-FIT/whisper-ATC-czech-full/resolve/main/model.safetensors?download=true"
+whisper_url = "https://github.com/openai/whisper"
 
 
 # functions
@@ -135,10 +138,29 @@ def download_model(context):
 
 
 @task
+def download_whisper_repo(context):
+    if exists(whisper_path): # repo already exists
+        print_color(colors.BLUE, "Pulling new updates from whisper")
+        repo = Repo(whisper_path)
+        origin = repo.remotes.origin
+        pull_info = origin.pull()
+
+        for info in pull_info:
+            print(f"Branch: {info.ref.name}")
+            print(f"Commit: {info.commit.hexsha}")
+            print(f"Summary: {info.commit.summary}")
+    else: # clone repo
+        print_color(colors.BLUE, f"Cloning whisper repo in {whisper_path}")
+        Repo.clone_from(whisper_url, whisper_path)
+
+    print_color(colors.BLUE, "Done!")
+
+
+@task
 def convert_model(context, conversion_type):
     st_path = join(abs_path_src, "model/source/atc-whisper.safetensors")
     pt_path = join(abs_path_src, "model/source/atc-whisper.pt")
-    ggml_path = join(abs_path_src, "model/source/atc-whisper.bin")
+    ggml_path = join(abs_path_src, "model/source/atc-whisper-ggml.bin")
     bin_path = join(abs_path_src, "model/source/atc-whisper-torch.bin")
 
     if conversion_type == "st-to-ggml":
@@ -160,7 +182,7 @@ def convert_model(context, conversion_type):
         print_color(colors.BLUE, "Converting bin to pytorch")
         pretrained_to_pt(pt_path)
         print_color(colors.BLUE, "Converting pytorch to ggml")
-        pt_to_ggml(pt_path, "openai/whisper-medium", ggml_path)
+        pt_to_ggml(pt_path, whisper_path, ggml_path)
 
 
 # definitions

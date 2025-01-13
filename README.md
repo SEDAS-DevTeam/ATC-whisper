@@ -48,4 +48,6 @@ src
 - [x] Add wav file parsing and validate
 - [ ] Add tokenize to data
 - [ ] Cleanup TODOs
-- [ ] Recheck everything + add DataCollator
+- [x] Recheck everything + add DataCollator
+- [ ] Fix the conversion, rework pt-to-ggml.py
+- [ ] If conversion works maybe move download_whisper_repo to download_model?
