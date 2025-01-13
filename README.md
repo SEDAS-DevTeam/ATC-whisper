@@ -42,12 +42,12 @@ src
 - [x] Add Whisper download
 - [x] Add Dataset processing
 - [x] Dataset cleanup
-- [ ] Finish infer
+- [x] Finish infer
 - [x] Add model stashing
 - [x] Finish whisper loading to torch (preparing for fine-tune)
 - [x] Add wav file parsing and validate
-- [ ] Add tokenize to data
 - [ ] Cleanup TODOs
 - [x] Recheck everything + add DataCollator
-- [ ] Fix the conversion, rework pt-to-ggml.py
-- [ ] If conversion works maybe move download_whisper_repo to download_model?
+- [x] Fix the conversion, rework pt-to-ggml.py
+- [x] If conversion works maybe move download_whisper_repo to download_model?
+- [ ] Find a way of downloading larger models
