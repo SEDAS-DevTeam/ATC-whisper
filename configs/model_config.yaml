@@ -2,3 +2,4 @@ model_source: https://huggingface.co/BUT-FIT/whisper-ATC-czech-full/resolve/main
 type: huggingface
 args: ["-DGGML_CUDA=1", "-DWHISPER_SDL2=ON"]
 infer_args: ["-t 8", "--step 2000", "--length 2000"]
+chunk_size: 8192

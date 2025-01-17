@@ -405,7 +405,7 @@ def bin_to_ggml(dir_model, dir_whisper, fname_out):
         for b in range(2**8):
             if b not in bs:
                 bs.append(b)
-                cs.append(2**8+n)
+                cs.append(2**8 + n)
                 n += 1
         cs = [chr(n) for n in cs]
         return dict(zip(bs, cs))
@@ -415,7 +415,7 @@ def bin_to_ggml(dir_model, dir_whisper, fname_out):
     fname_out   = Path(fname_out)
 
     encoder = json.load((dir_model / "vocab.json").open("r", encoding="utf8"))
-    encoder_added = json.load((dir_model / "added_tokens.json").open( "r", encoding="utf8"))
+    encoder_added = json.load((dir_model / "added_tokens.json").open("r", encoding="utf8"))
     hparams = json.load((dir_model / "config.json").open("r", encoding="utf8"))
 
     # Add this block to handle missing 'max_length'

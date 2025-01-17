@@ -7,6 +7,7 @@ from pathlib import Path
 import requests
 from invoke import task
 import time
+from functools import partial
 
 # os library import
 from os import mkdir, chdir
@@ -17,12 +18,13 @@ import yaml
 from git import Repo
 
 # conversion
-from model.conversion import bin_to_ggml, bin_to_pt, pretrained_to_pt, st_to_pt, pt_to_st, pt_to_ggml, ggml_to_pt
+from model.conversion import bin_to_ggml, pretrained_to_pt, st_to_pt, pt_to_st, pt_to_ggml, ggml_to_pt
 
 abs_path = str(Path(__file__).parents[1])
 abs_path_src = join(abs_path, "src/")
 
 model_config_path = join(abs_path, "configs/model_config.yaml")
+modeltest_config_path = join(abs_path, "configs/modeltest_config.yaml")
 
 model_path = join(abs_path_src, "model/source/fine_whisper")
 openai_path = join(abs_path_src, "model/source/whisper")
@@ -126,21 +128,30 @@ def check_repo(path, url, repo_name):
     print_color(colors.BLUE, "Done!")
 
 
-def fetch_resource(url, path):
+def fetch_resource(url, path, in_chunks):
     response = requests.get(url)
     if response.status_code == 200:
+        response.raise_for_status() # Raise an error for bad status codes
         with open(path, "wb") as model_file:
-            model_file.write(response.content)
+            if in_chunks:
+                for chunk in response.iter_content(chunk_size=model_config["chunk_size"]):
+                    if chunk: model_file.write(chunk)
+            else:
+                model_file.write(response.content)
 
 
 def reformat_url(url, filename):
     return url + filename + "?download=true"
 
 
-def fetch_model_file(url, path, filename):
+def fetch_model_file(url, path, filename, is_model=False):
     # just an top-level abstraction because I am lazy
-    fetch_resource(reformat_url(url, filename),
-                   join(path, filename))
+    fetch = partial(fetch_resource,
+                    reformat_url(url, filename),
+                    join(path, filename))
+
+    if is_model: fetch(True)
+    else: fetch(False)
 
 
 # invoke tasks
@@ -153,6 +164,15 @@ def run_infer(context):
     inference_args.insert(0, f"-m {ggml_model_path}")
 
     context.run(add_args(ggml_script_path, *inference_args))
+
+
+@task
+def run_modeltest(context):
+    dataset_path = modeltest_config["test_dataset_path"]
+    models = modeltest_config["test_models"]
+
+    print(dataset_path)
+    print(models)
 
 
 @task
@@ -174,6 +194,9 @@ def download_model_files(context):
     fetch_model_file(model_source, model_path, "added_tokens.json")
     fetch_model_file(model_source, model_path, "vocab.json")
     fetch_model_file(model_source, model_path, "config.json")
+
+    print_color(colors.BLUE, "Fetching main model file...")
+    fetch_model_file(model_source, model_path, "pytorch_model.bin", is_model=True)
 
     print_color(colors.BLUE, "Done!")
 
@@ -248,6 +271,7 @@ class chars:
 
 
 model_config = load_config(model_config_path)
+modeltest_config = load_config(modeltest_config_path)
 
 # start program
 print(colors.BLUE)
