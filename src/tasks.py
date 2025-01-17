@@ -213,7 +213,7 @@ def build_whisper_inference(context):
     print_color(colors.BLUE, "Building whisper.cpp...")
     context.run(add_args("cmake -B build", *model_config["args"]))
     print_color(colors.BLUE, "Building whisper.cpp Release...")
-    time.sleep(1) # TODO: why does this delay let whisper.cpp compile :( (otherwise, wont work for some reason)
+    time.sleep(1) # why does this delay let whisper.cpp compile :( (otherwise, wont work for some reason)
     context.run("cmake --build build --config Release")
 
     # moving whisper stream binary to source
