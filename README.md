@@ -72,8 +72,8 @@ invoke download-model-files
 - [x] Add model stashing
 - [x] Finish whisper loading to torch (preparing for fine-tune)
 - [x] Add wav file parsing and validate
-- [ ] Cleanup TODOs
+- [x] Cleanup TODOs
 - [x] Recheck everything + add DataCollator
 - [x] Fix the conversion, rework pt-to-ggml.py
 - [x] If conversion works maybe move download_whisper_repo to download_model?
-- [ ] Find a way of downloading larger models
+- [x] Find a way of downloading larger models
