@@ -25,13 +25,7 @@ abs_path_src = join(abs_path, "src/")
 
 model_config_path = join(abs_path, "configs/model_config.yaml")
 modeltest_config_path = join(abs_path, "configs/modeltest_config.yaml")
-
-model_path = join(abs_path_src, "model/source/fine_whisper")
-openai_path = join(abs_path_src, "model/source/whisper")
-whisper_cpp_path = join(abs_path_src, "model/source/whisper_cpp")
-
-openai_url = "https://github.com/openai/whisper"
-whisper_cpp_url = "https://github.com/ggerganov/whisper.cpp"
+general_config_path = join(abs_path, "configs/general_config.yaml")
 
 
 # functions
@@ -118,16 +112,6 @@ def pull_from_repo(path):
         print(f"Summary: {info.commit.summary}")
 
 
-def check_repo(path, url, repo_name):
-    if exists(path): # repo already exists, rewrite
-        shutil.rmtree(path)
-
-    print_color(colors.BLUE, f"Cloning {repo_name} repo in {path}")
-    Repo.clone_from(url, path)
-
-    print_color(colors.BLUE, "Done!")
-
-
 def fetch_resource(url, path, in_chunks):
     response = requests.get(url)
     if response.status_code == 200:
@@ -202,12 +186,6 @@ def download_model_files(context):
 
 
 @task
-def download_toolkits(context):
-    check_repo(openai_path, openai_url, "Openai/whisper")
-    check_repo(whisper_cpp_path, whisper_cpp_url, "Whisper.cpp")
-
-
-@task
 def build_whisper_inference(context):
     chdir(whisper_cpp_path)
     print_color(colors.BLUE, "Building whisper.cpp...")
@@ -272,6 +250,14 @@ class chars:
 
 model_config = load_config(model_config_path)
 modeltest_config = load_config(modeltest_config_path)
+general_config = load_config(general_config_path)
+
+model_path = join(abs_path, general_config["model_save_path"])
+openai_path = join(abs_path, general_config["whisper_path"])
+whisper_cpp_path = join(abs_path, general_config["whisper_cpp_path"])
+
+openai_url = "https://github.com/openai/whisper"
+whisper_cpp_url = "https://github.com/ggerganov/whisper.cpp"
 
 # start program
 print(colors.BLUE)

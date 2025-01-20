@@ -1,0 +1,3 @@
+whisper_path: "src/modules/whisper"
+whisper_cpp_path: "src/modules/whisper.cpp"
+model_save_path: "src/model/source/fine_whisper"

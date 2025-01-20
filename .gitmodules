@@ -1,0 +1,6 @@
+[submodule "src/modules/whisper.cpp"]
+	path = src/modules/whisper.cpp
+	url = https://github.com/ggerganov/whisper.cpp
+[submodule "src/modules/whisper"]
+	path = src/modules/whisper
+	url = https://github.com/openai/whisper.git

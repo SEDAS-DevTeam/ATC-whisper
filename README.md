@@ -29,15 +29,15 @@ To firstly use the project, you shall install all the toolkits and models. Every
 ### Step by step launch
 
 ```shell
-invoke download-toolkits
+invoke download-model-files # downloads all the necessary model files from huggingface
 ```
 
 ```shell
-invoke download-model-files
+invoke build-whisper-inference # builds whisper.cpp inference binary
 ```
 
 ```shell
-invoke download-model-files
+invoke run-infer # runs inference on specified model
 ```
 
 ## Dataset modifications
@@ -76,4 +76,5 @@ invoke download-model-files
 - [x] Recheck everything + add DataCollator
 - [x] Fix the conversion, rework pt-to-ggml.py
 - [x] If conversion works maybe move download_whisper_repo to download_model?
-- [x] Find a way of downloading larger models
+- [ ] Find a way of downloading larger models
+- [x] Add whisper.cpp and openai/whisper as submodules
