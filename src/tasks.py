@@ -195,8 +195,8 @@ def build_whisper_inference(context):
     context.run("cmake --build build --config Release")
 
     # moving whisper stream binary to source
-    whisper_stream_path = join(whisper_cpp_path, "build/bin/whisper-stream")
-    whisper_source_path = join(abs_path_src, "model/source/whisper-stream")
+    whisper_stream_path = join(whisper_cpp_path, f"build/bin/{model_config['bin_to_copy']}")
+    whisper_source_path = join(abs_path_src, f"model/source/{model_config['bin_to_copy']}")
 
     shutil.move(whisper_stream_path, whisper_source_path)
 

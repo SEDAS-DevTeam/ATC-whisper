@@ -20,6 +20,13 @@ src
 
 ## How to
 
+### Cloning
+
+``` shell
+git clone --recursive https://github.com/SEDAS-DevTeam/ATC-whisper.git
+cd ATC-whisper
+```
+
 This whole project is built with `invoke` library. There are couple of helper functions to make model usage far more easier (Hence named the *model-playground*). To get list of commands, their descriptions and arguments, run `invoke --list` (**NOTE:** In order to run all the invoke commands, you have to get to the `/src` directory).
 
 This repo is using conda, every depencies are written inside `environment.yaml`.
@@ -78,3 +85,4 @@ invoke run-infer # runs inference on specified model
 - [x] If conversion works maybe move download_whisper_repo to download_model?
 - [ ] Find a way of downloading larger models
 - [x] Add whisper.cpp and openai/whisper as submodules
+- [ ] Finish C++ inference
