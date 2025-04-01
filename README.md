@@ -83,6 +83,7 @@ invoke run-infer # runs inference on specified model
 - [x] Recheck everything + add DataCollator
 - [x] Fix the conversion, rework pt-to-ggml.py
 - [x] If conversion works maybe move download_whisper_repo to download_model?
-- [ ] Find a way of downloading larger models
+- [x] Find a way of downloading larger models
 - [x] Add whisper.cpp and openai/whisper as submodules
-- [ ] Finish C++ inference
+- [ ] Finish C++ inference testing script
+- [ ] Implement workspace switch on testing and also on training
