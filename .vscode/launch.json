@@ -1,0 +1,26 @@
+{
+  "configurations": [
+    {
+      "name": "Debug invoke",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${env:HOME}/miniforge3/envs/atc_whisper/bin/invoke",
+      "args": ["${input:arg1}", "${input:arg2}"],
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "cwd": "${workspaceFolder}/src"
+    }
+  ],
+  "inputs": [
+    {
+      "id": "arg1",
+      "type": "promptString",
+      "description": "Enter the first argument"
+    },
+    {
+      "id": "arg2",
+      "type": "promptString",
+      "description": "Enter the second argument"
+    }
+  ]
+}

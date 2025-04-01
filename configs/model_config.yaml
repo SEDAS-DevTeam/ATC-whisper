@@ -1,3 +1,6 @@
-type: "base.en"
-compute: "cuda"
-checkpoint_path: "src/model/source/base.en.pt"
+model_source: https://huggingface.co/BUT-FIT/whisper-ATC-czech-full/resolve/main/
+type: huggingface
+args: ["-DGGML_CUDA=1"]
+bin_to_copy: "whisper-cli"
+infer_args: ["-t 8", "--step 2000", "--length 2000"]
+chunk_size: 8192

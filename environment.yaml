@@ -22,3 +22,5 @@ dependencies:
     - pandas
     - PySoundFile
     - gradio
+    - safetensors
+    - gitpython
