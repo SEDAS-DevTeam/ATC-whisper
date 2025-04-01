@@ -5,6 +5,7 @@ import shutil
 from tabulate import tabulate
 from pathlib import Path
 import requests
+from tqdm import tqdm
 from invoke import task
 import time
 from functools import partial
@@ -113,15 +114,31 @@ def pull_from_repo(path):
 
 
 def fetch_resource(url, path, in_chunks):
-    response = requests.get(url)
-    if response.status_code == 200:
-        response.raise_for_status() # Raise an error for bad status codes
-        with open(path, "wb") as model_file:
-            if in_chunks:
-                for chunk in response.iter_content(chunk_size=model_config["chunk_size"]):
-                    if chunk: model_file.write(chunk)
-            else:
+    if not in_chunks:
+        response = requests.get(url)
+        if response.status_code == 200:
+            response.raise_for_status() # Raise an error for bad status codes
+            with open(path, "wb") as model_file:
                 model_file.write(response.content)
+
+    else:
+        response = requests.get(url, stream=True)
+
+        total_size = int(response.headers.get("content-length"))
+
+        if response.status_code == 200:
+            response.raise_for_status()
+            with open(path, "wb") as model_file:
+                progress_bar = tqdm(desc="Downloading Whisper binary...",
+                                    total=total_size,
+                                    unit="B",
+                                    unit_scale=True,
+                                    unit_divisor=1024)
+
+                for chunk in response.iter_content(chunk_size=model_config["chunk_size"]):
+                    if chunk:
+                        model_file.write(chunk)
+                        progress_bar.update(len(chunk))
 
 
 def reformat_url(url, filename):
