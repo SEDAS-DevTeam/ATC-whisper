@@ -2,13 +2,13 @@
 
 # imports
 import shutil
-from tabulate import tabulate
 from pathlib import Path
 import requests
 from tqdm import tqdm
 from invoke import task
 import time
 from functools import partial
+from huggingface_hub import upload_folder, login, snapshot_download
 
 # os library import
 from os import mkdir, chdir
@@ -32,6 +32,10 @@ general_config_path = join(abs_path, "configs/general_config.yaml")
 # functions
 def print_color(color, text):
     print(color + text + colors.ENDC)
+
+
+def input_color(color, text):
+    return input(color + text + colors.ENDC)
 
 
 def load_config(path):
@@ -177,33 +181,50 @@ def run_modeltest(context):
 
 
 @task
-def download_model_files(context):
+def download(context, type="all"):
     print_color(colors.BLUE, "Starting model download...")
     model_type = model_config["type"]
     model_source = model_config["model_source"]
 
-    if model_type == "huggingface":
-        # prefer installing pytorch .bin files with json configurations
-        if exists(model_path):
-            # rewrite whole directory (when trying different models, etc.)
-            shutil.rmtree(model_path)
-            mkdir(model_path)
-        else:
-            mkdir(model_path)
+    def download_model():
+        if model_type == "huggingface":
+            # prefer installing pytorch .bin files with json configurations
+            if exists(model_path):
+                # rewrite whole directory (when trying different models, etc.)
+                shutil.rmtree(model_path)
+                mkdir(model_path)
+            else:
+                mkdir(model_path)
 
-    print_color(colors.BLUE, "Starting model files download...")
-    fetch_model_file(model_source, model_path, "added_tokens.json")
-    fetch_model_file(model_source, model_path, "vocab.json")
-    fetch_model_file(model_source, model_path, "config.json")
+        print_color(colors.BLUE, "Starting model files download...")
+        fetch_model_file(model_source, model_path, "added_tokens.json")
+        fetch_model_file(model_source, model_path, "vocab.json")
+        fetch_model_file(model_source, model_path, "config.json")
 
-    print_color(colors.BLUE, "Fetching main model file...")
-    fetch_model_file(model_source, model_path, "pytorch_model.bin", is_model=True)
+        print_color(colors.BLUE, "Fetching main model file...")
+        fetch_model_file(model_source, model_path, "pytorch_model.bin", is_model=True)
+
+    def download_repo():
+        print_color(colors.BLUE, "Cloning huggingface repo...")
+        snapshot_download(
+            repo_id=huggingface_repo,
+            local_dir=huggingface_repo_path,
+            local_dir_use_symlinks=False
+        )
+
+    if type == "all":
+        download_model()
+        download_repo()
+    elif type == "repo":
+        download_repo()
+    elif type == "model":
+        download_model()
 
     print_color(colors.BLUE, "Done!")
 
 
 @task
-def build_whisper_inference(context):
+def build(context):
     chdir(whisper_cpp_path)
     print_color(colors.BLUE, "Building whisper.cpp...")
     context.run(add_args("cmake -B build", *model_config["args"]))
@@ -212,7 +233,7 @@ def build_whisper_inference(context):
     context.run("cmake --build build --config Release")
 
     # moving whisper stream binary to source
-    whisper_stream_path = join(whisper_cpp_path, f"build/bin/{model_config['bin_to_copy']}")
+    whisper_stream_path = join(whisper_cpp_path, f"build/bin/whisper-cli")
     whisper_source_path = join(abs_path_src, f"model/source/{model_config['bin_to_copy']}")
 
     shutil.move(whisper_stream_path, whisper_source_path)
@@ -222,7 +243,7 @@ def build_whisper_inference(context):
 
 
 @task
-def convert_model(context, conversion_type):
+def convert(context, conversion_type):
     st_path = join(abs_path_src, "model/source/atc-whisper.safetensors")
     pt_path = join(abs_path_src, "model/source/atc-whisper.pt")
     ggml_path = join(abs_path_src, "model/source/atc-whisper-ggml.bin")
@@ -252,6 +273,27 @@ def convert_model(context, conversion_type):
         bin_to_ggml(bin_path, openai_path, ggml_path)
 
 
+@task
+def upload(context):
+    """
+        Uploads corresponding GGML binary and model file to Huggingface
+    """
+    token = load_config(huggingface_token_path)
+
+    # verifying hugginface user
+    login(token["token"])
+
+    commit_msg = input_color(colors.BLUE, "Write your commit message: ")
+
+    upload_folder(
+        folder_path=huggingface_repo_path,
+        repo_id=huggingface_repo,
+        ignore_patterns=[".gitkeep", ".cache"],
+        commit_message=commit_msg
+    )
+    print_color(colors.BLUE, "Done")
+
+
 # definitions
 class colors:
     ENDC = '\033[0m'
@@ -276,7 +318,6 @@ whisper_cpp_path = join(abs_path, general_config["whisper_cpp_path"])
 openai_url = "https://github.com/openai/whisper"
 whisper_cpp_url = "https://github.com/ggerganov/whisper.cpp"
 
-# start program
-print(colors.BLUE)
-print(tabulate([["ATC-whisper project manager"]]))
-print(colors.ENDC)
+huggingface_repo = "HelloWorld7894/SEDAS-whisper"
+huggingface_repo_path = join(abs_path_src, "model/export")
+huggingface_token_path = join(abs_path, "token.yaml")
