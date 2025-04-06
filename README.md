@@ -87,3 +87,6 @@ invoke run-infer # runs inference on specified model
 - [x] Add whisper.cpp and openai/whisper as submodules
 - [ ] Finish C++ inference testing script
 - [ ] Implement workspace switch on testing and also on training
+- [ ] Switch from conda to pyenv
+- [x] Add Huggingface publishing
+- [ ] Add progressbar on huggingface upload

@@ -5,3 +5,10 @@
 # Python pregenerated files/folders
 /src/train/__pycache__
 /src/model/__pycache__
+
+# Huggingface access token
+token.yaml
+
+# Huggingface repo
+/src/model/export/*
+!/src/model/export/.gitkeep

@@ -25,3 +25,4 @@ dependencies:
     - safetensors
     - gitpython
     - tqdm
+    - huggingface-hub
