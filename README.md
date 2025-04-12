@@ -18,34 +18,9 @@ src
     └─ model.py # for whisper model initialization
 ```
 
-## How to
+## Installation/Usage
 
-### Cloning
-
-``` shell
-git clone --recursive https://github.com/SEDAS-DevTeam/ATC-whisper.git
-cd ATC-whisper
-```
-
-This whole project is built with `invoke` library. There are couple of helper functions to make model usage far more easier (Hence named the *model-playground*). To get list of commands, their descriptions and arguments, run `invoke --list` (**NOTE:** In order to run all the invoke commands, you have to get to the `/src` directory).
-
-This repo is using conda, every depencies are written inside `environment.yaml`.
-
-To firstly use the project, you shall install all the toolkits and models. Everything changeable is written in simple yaml configurations written in `/configs` directory.
-
-### Step by step launch
-
-```shell
-invoke download-model-files # downloads all the necessary model files from huggingface
-```
-
-```shell
-invoke build-whisper-inference # builds whisper.cpp inference binary
-```
-
-```shell
-invoke run-infer # runs inference on specified model
-```
+Installation steps are located in the [SEDAS documentation](https://sedas-docs.readthedocs.io/en/latest/user-manual.html#app-installation)
 
 ## Dataset modifications
 
