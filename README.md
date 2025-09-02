@@ -18,6 +18,15 @@ src
     └─ model.py # for whisper model initialization
 ```
 
+## Tech stack
+
+![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=fff)
+![C++](https://img.shields.io/badge/C++-%2300599C.svg?style=for-the-badge&logo=c%2B%2B&logoColor=white)
+![Hugging Face](https://img.shields.io/badge/Hugging%20Face-FFD21E?style=for-the-badge&logo=huggingface&logoColor=000)
+![PyTorch](https://img.shields.io/badge/PyTorch-ee4c2c?style=for-the-badge&logo=pytorch&logoColor=white)
+![Whisper](https://img.shields.io/badge/Whisper-grey?logo=openai&logoColor=white&style=for-the-badge)
+![Whisper.cpp](https://img.shields.io/badge/Whisper.cpp-grey?style=for-the-badge)
+
 ## Installation/Usage
 
 Installation steps are located in the [SEDAS documentation](https://sedas-docs.readthedocs.io/en/latest/user-manual.html#app-installation)
